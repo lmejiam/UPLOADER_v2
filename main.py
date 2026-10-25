@@ -25,6 +25,7 @@ SLEEP_SECONDS         = int(os.getenv("SLEEP_SECONDS","300"))
 FILE_MIN_AGE_SECONDS  = int(os.getenv("FILE_MIN_AGE_SECONDS","30"))
 
 CLEANUP_DAYS          = int(os.getenv("CLEANUP_DAYS","7"))
+CLEANUP_ENABLED       = os.getenv("CLEANUP_ENABLED","true").lower() == "true"
 
 PING_IP               = os.getenv("PING_IP")
 PING_TIMEOUT_SECONDS  = int(os.getenv("PING_TIMEOUT_SECONDS","5"))
@@ -65,8 +66,9 @@ if __name__ == "__main__":
                 uploaded_images = upload_files(s3, images, IMAGES_BUCKET, stop_event)
                 move_files(uploaded_images, IMAGE_UPLOADED_FOLDER)
 
-            delete_old_files(DATA_UPLOADED_FOLDER, CLEANUP_DAYS)
-            delete_old_files(IMAGE_UPLOADED_FOLDER, CLEANUP_DAYS)
+            if CLEANUP_ENABLED:
+                delete_old_files(DATA_UPLOADED_FOLDER, CLEANUP_DAYS)
+                delete_old_files(IMAGE_UPLOADED_FOLDER, CLEANUP_DAYS)
 
         # Like time.sleep, but wakes up right away on a stop signal
         stop_event.wait(SLEEP_SECONDS)
