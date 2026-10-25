@@ -1,0 +1,23 @@
+services:
+  uploader:
+    build: .
+    container_name: uploader
+    restart: unless-stopped
+    init: true                # passes docker stop signals to Python properly
+    stop_grace_period: 2m     # time to finish the current upload before Docker force-kills
+    env_file: .env
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"         # start a new log file when the current one reaches 10 MB
+        max-file: "5"           # keep at most 5 files (50 MB total), oldest is deleted
+    environment:
+      IMAGE_UPLOAD_FOLDER: /data/images/upload
+      IMAGE_UPLOADED_FOLDER: /data/images/uploaded
+      DATA_UPLOAD_FOLDER: /data/data/upload
+      DATA_UPLOADED_FOLDER: /data/data/uploaded
+    volumes:
+      - ${IMAGE_UPLOAD_FOLDER}:/data/images/upload
+      - ${IMAGE_UPLOADED_FOLDER}:/data/images/uploaded
+      - ${DATA_UPLOAD_FOLDER}:/data/data/upload
+      - ${DATA_UPLOADED_FOLDER}:/data/data/uploaded
