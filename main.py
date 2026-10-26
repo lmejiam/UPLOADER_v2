@@ -9,6 +9,7 @@ from move_files     import move_files
 from uploader       import get_s3_client, upload_files
 from cleaner        import delete_old_files
 from pinger         import is_reachable
+from hmi_archiver   import archive_originals
 
 load_dotenv()
 
@@ -21,6 +22,7 @@ log = logging.getLogger("uploader")
 
 IMAGE_UPLOAD_FOLDER       = os.getenv("IMAGE_UPLOAD_FOLDER")
 IMAGE_UPLOADED_FOLDER     = os.getenv("IMAGE_UPLOADED_FOLDER")
+HMI_IMAGES_FOLDER         = os.getenv("HMI_IMAGES_FOLDER")
 DATA_UPLOAD_FOLDER        = os.getenv("DATA_UPLOAD_FOLDER")
 DATA_UPLOADED_FOLDER      = os.getenv("DATA_UPLOADED_FOLDER")
 IMAGES_BUCKET             = os.getenv("IMAGES_BUCKET")
@@ -55,7 +57,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, handle_stop)
 
     log.info("Uploader starting")
-    log.info(f"  Images: {IMAGE_UPLOAD_FOLDER} -> bucket '{IMAGES_BUCKET}' -> {IMAGE_UPLOADED_FOLDER}")
+    log.info(f"  Images: {IMAGE_UPLOAD_FOLDER} -> bucket '{IMAGES_BUCKET}', originals {HMI_IMAGES_FOLDER} -> {IMAGE_UPLOADED_FOLDER}")
     log.info(f"  Data:   {DATA_UPLOAD_FOLDER} -> bucket '{DATA_BUCKET}' -> {DATA_UPLOADED_FOLDER}")
     log.info(f"  S3 endpoint: {os.getenv('AWS_ENDPOINT_URL') or 'AWS default'}")
     log.info(f"  Scan every {SLEEP_SECONDS}s, skip files newer than {FILE_MIN_AGE_SECONDS}s")
@@ -81,7 +83,7 @@ if __name__ == "__main__":
 
             if images and not stop_event.is_set():
                 uploaded_images = upload_files(s3, images, IMAGES_BUCKET, stop_event)
-                move_files(uploaded_images, IMAGE_UPLOADED_FOLDER)
+                archive_originals(uploaded_images, HMI_IMAGES_FOLDER, IMAGE_UPLOADED_FOLDER)
 
             if CLEANUP_ENABLED:
                 delete_old_files(DATA_UPLOADED_FOLDER, CLEANUP_DAYS)

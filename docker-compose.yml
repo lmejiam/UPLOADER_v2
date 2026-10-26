@@ -11,13 +11,10 @@ services:
       options:
         max-size: "10m"         # start a new log file when the current one reaches 10 MB
         max-file: "5"           # keep at most 5 files (50 MB total), oldest is deleted
-    environment:
-      IMAGE_UPLOAD_FOLDER: /data/images/upload
-      IMAGE_UPLOADED_FOLDER: /data/images/uploaded
-      DATA_UPLOAD_FOLDER: /data/data/upload
-      DATA_UPLOADED_FOLDER: /data/data/uploaded
     volumes:
-      - ${IMAGE_UPLOAD_FOLDER}:/data/images/upload
-      - ${IMAGE_UPLOADED_FOLDER}:/data/images/uploaded
-      - ${DATA_UPLOAD_FOLDER}:/data/data/upload
-      - ${DATA_UPLOADED_FOLDER}:/data/data/uploaded
+      # Mounted at the same paths as on the server, so the paths in .env work as-is
+      # Server's Syncthing copy of the images
+      - ${IMAGE_UPLOAD_FOLDER}:${IMAGE_UPLOAD_FOLDER}
+      # The whole HMI share as ONE mount, so moves inside it are real renames on the HMI
+      # (separate mounts would copy every file through the tunnel and back)
+      - ${HMI_FOLDER}:${HMI_FOLDER}
