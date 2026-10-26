@@ -1,5 +1,8 @@
-import os 
+import os
 import time
+import logging
+
+log = logging.getLogger(__name__)
 
 
 
@@ -26,8 +29,8 @@ def delete_old_files(folder, max_age_days):
 
                 os.remove(path)
                 deleted.append(path)
-                print(f"Deleted {path}")
+                log.info(f"Deleted {path}")
             except Exception as e:
-                print(f"Delete failed {path}: {e}")
+                log.error(f"Delete failed {path}: {e}")
 
     return deleted

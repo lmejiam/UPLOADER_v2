@@ -1,5 +1,6 @@
 import os
 import signal
+import logging
 import threading
 from dotenv import load_dotenv
 
@@ -10,6 +11,13 @@ from cleaner        import delete_old_files
 from pinger         import is_reachable
 
 load_dotenv()
+
+logging.basicConfig(
+    level   = logging.INFO,
+    format  = "%(asctime)s %(levelname)-5s %(message)s",
+    datefmt = "%Y-%m-%d %H:%M:%S",
+)
+log = logging.getLogger("uploader")
 
 IMAGE_UPLOAD_FOLDER       = os.getenv("IMAGE_UPLOAD_FOLDER")
 IMAGE_UPLOADED_FOLDER     = os.getenv("IMAGE_UPLOADED_FOLDER")
@@ -36,7 +44,7 @@ stop_event = threading.Event()
 
 
 def handle_stop(signum, frame):
-    print("Stop signal received, finishing current file before exiting...")
+    log.info("Stop signal received, finishing current file before exiting...")
     stop_event.set()
 
 
@@ -46,17 +54,26 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, handle_stop)
     signal.signal(signal.SIGINT, handle_stop)
 
+    log.info("Uploader starting")
+    log.info(f"  Images: {IMAGE_UPLOAD_FOLDER} -> bucket '{IMAGES_BUCKET}' -> {IMAGE_UPLOADED_FOLDER}")
+    log.info(f"  Data:   {DATA_UPLOAD_FOLDER} -> bucket '{DATA_BUCKET}' -> {DATA_UPLOADED_FOLDER}")
+    log.info(f"  S3 endpoint: {os.getenv('AWS_ENDPOINT_URL') or 'AWS default'}")
+    log.info(f"  Scan every {SLEEP_SECONDS}s, skip files newer than {FILE_MIN_AGE_SECONDS}s")
+    log.info(f"  Cleanup: {f'after {CLEANUP_DAYS} days' if CLEANUP_ENABLED else 'disabled'}")
+    log.info(f"  Ping check: {PING_IP or 'disabled'}")
+
     s3 = get_s3_client()
 
     while not stop_event.is_set():
 
         # Only run the cycle if the host answers. If PING_IP is empty, always run.
         if PING_IP and not is_reachable(PING_IP, PING_TIMEOUT_SECONDS):
-            print(f"{PING_IP} not reachable, skipping this cycle")
+            log.warning(f"{PING_IP} not reachable, skipping this cycle")
 
         else:
             images  = find_files(IMAGE_UPLOAD_FOLDER, IMAGE_EXTENSIONS, FILE_MIN_AGE_SECONDS)
             data    = find_files(DATA_UPLOAD_FOLDER, DATA_EXTENSIONS, FILE_MIN_AGE_SECONDS)
+            log.info(f"Scan: {len(images)} images, {len(data)} data files ready")
 
             if data:
                 uploaded_data = upload_files(s3, data, DATA_BUCKET, stop_event)
@@ -73,4 +90,4 @@ if __name__ == "__main__":
         # Like time.sleep, but wakes up right away on a stop signal
         stop_event.wait(SLEEP_SECONDS)
 
-    print("Uploader stopped")
+    log.info("Uploader stopped")

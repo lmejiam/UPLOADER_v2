@@ -1,5 +1,8 @@
 import os
 import shutil
+import logging
+
+log = logging.getLogger(__name__)
 
 
 def move_files(paths, target_folder):
@@ -11,7 +14,6 @@ def move_files(paths, target_folder):
 
         try:
             shutil.move(path,dest)
-            print(f"Moved {path} ----- {dest}")
+            log.info(f"Moved {path} -> {dest}")
         except Exception as e:
-            print(f"Move failed {path}: {e}")
-            
+            log.error(f"Move failed {path}: {e}")

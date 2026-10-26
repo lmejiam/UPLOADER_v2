@@ -1,4 +1,7 @@
 import subprocess
+import logging
+
+log = logging.getLogger(__name__)
 
 
 
@@ -18,5 +21,5 @@ def is_reachable(ip, timeout_seconds=5):
         return False
 
     except FileNotFoundError:
-        print("Ping failed: the 'ping' command is not installed")
+        log.error("Ping failed: the 'ping' command is not installed")
         return False
